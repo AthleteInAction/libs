@@ -6,6 +6,7 @@ module ZendeskAPI
   require 'net/http'
   require 'net/https'
   require 'uri'
+  require 'rinothread'
   #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
   
   class Connect
@@ -494,6 +495,39 @@ module ZendeskAPI
         
       end
       # ===================================================
+
+      # Get Locales
+      # ============================================================
+      # ============================================================
+      def LocaleKey
+
+        locale_key = {}
+        rino = Rino::Tusk.new 10
+        total = GetLocales(per_page: 1)[:body]['count']
+        pages = (total.to_f/100).ceil
+        pages.times do |page|
+
+          page += 1
+
+          rino.queue do
+
+            call = GetLocales(page: page)
+            call[:body]['locales'].each do |locale|
+              
+              locale_key = locale_key.merge(locale['id'].to_s => locale['locale'])
+
+            end
+
+          end
+          
+        end
+        rino.execute
+
+        locale_key
+
+      end
+      # ============================================================
+      # ============================================================
       
     #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
     
