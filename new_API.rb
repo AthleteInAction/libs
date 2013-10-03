@@ -342,6 +342,41 @@ module ZendeskAPI
         
       end
       # ===================================================
+
+      # Get Categories
+      # ============================================================
+      # ============================================================
+      def CatKey
+
+        cat_key = {}
+        cat_key_r = {}
+        rino = Rino::Tusk.new 10
+        total = GetCategories(per_page: 1)[:body]['count']
+        pages = (total.to_f/100).ceil
+        pages.times do |page|
+
+          page += 1
+
+          rino.queue do
+
+            call = GetCategories(page: page)
+            call[:body]['categories'].each do |cat|
+
+              cat_key = cat_key.merge(cat['id'].to_s => cat)
+              cat_key_r = cat_key_r.merge(cat['name'].downcase.gsub(/\W/,'_') => cat['id'].to_s)
+
+            end
+
+          end
+          
+        end
+        rino.execute
+        
+        {id: cat_key,name: cat_key_r}
+
+      end
+      # ============================================================
+      # ============================================================
       
     #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
     
@@ -376,9 +411,9 @@ module ZendeskAPI
       # ===================================================
       # UPDATE Forum
       # ===================================================
-      def UpdateForum params = {}
+      def UpdateForum id,params = {}
         
-        APICall(path: 'forums.json',method: 'PUT',payload: params.to_json)
+        APICall(path: "forums/#{id}.json",method: 'PUT',payload: params.to_json)
         
       end
       # ===================================================
@@ -390,6 +425,41 @@ module ZendeskAPI
         
       end
       # ===================================================
+
+      # Get Forums
+      # ============================================================
+      # ============================================================
+      def ForumKey
+
+        key = {}
+        key_r = {}
+        rino_f = Rino::Tusk.new 10
+        total = GetForums(per_page: 1)[:body]['count']
+        pages = (total.to_f/100).ceil
+        pages.times do |page|
+
+          page += 1
+
+          rino_f.queue do
+
+            call = GetForums(page: page)
+            call[:body]['forums'].each do |forum|
+
+              key = key.merge(forum['id'].to_s => forum)
+              key_r = key_r.merge(forum['name'].to_s.downcase.gsub(/\W/,'_') => forum['id'])
+
+            end
+
+          end
+          
+        end
+        rino_f.execute
+        
+        {id: key,name: key_r}
+
+      end
+      # ============================================================
+      # ============================================================
       
     #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
     
@@ -502,6 +572,7 @@ module ZendeskAPI
       def LocaleKey
 
         locale_key = {}
+        locale_key_r = {}
         rino = Rino::Tusk.new 10
         total = GetLocales(per_page: 1)[:body]['count']
         pages = (total.to_f/100).ceil
@@ -513,8 +584,9 @@ module ZendeskAPI
 
             call = GetLocales(page: page)
             call[:body]['locales'].each do |locale|
-              
-              locale_key = locale_key.merge(locale['id'].to_s => locale['locale'])
+
+              locale_key = locale_key.merge(locale['id'].to_s => locale)
+              locale_key_r = locale_key_r.merge(locale['locale'].to_s => locale['id'])
 
             end
 
@@ -522,8 +594,8 @@ module ZendeskAPI
           
         end
         rino.execute
-
-        locale_key
+        
+        {id: locale_key,name: locale_key_r}
 
       end
       # ============================================================
@@ -804,6 +876,20 @@ module ZendeskAPI
       def Upload file
         
         APICall(path: "uploads.json?filename=#{file.split('/').last}",method: 'POST',payload: File.read(file))
+        
+      end
+      # ===================================================
+    
+    #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+
+    # Search
+    #-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:-:
+      
+      # UPLOAD File
+      # ===================================================
+      def Search query
+        
+        APICall(path: "search.json?query=#{query}",method: 'GET')
         
       end
       # ===================================================
